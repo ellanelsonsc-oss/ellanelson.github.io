@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Ella's Riddle Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet"/>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: linear-gradient(135deg, #fdf0f2 0%, #f9dde0 50%, #fdf0f2 100%);
+            font-family: 'Lato', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        nav {
+            width: 100%;
+            background-color: #b5838d;
+            padding: 14px 30px;
+            text-align: center;
+        }
+        nav a { color: white; text-decoration: none; margin: 0 14px; }
+        nav a:hover { color: #f9dde0; text-decoration: underline; }
+        .game-container {
+            max-width: 680px;
+            width: 95%;
+            margin: 50px auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 40px rgba(181,131,141,0.2);
+            padding: 40px 50px;
+            text-align: center;
+        }
+        .game-container h1 {
+            font-family: 'Playfair Display', serif;
+            color: #b5838d;
+            font-size: 2.4rem;
+            margin-bottom: 8px;
+        }
+        .subtitle { color: #a08090; font-size: 1rem; margin-bottom: 35px; }
+        .score-bar { display: flex; justify-content: center; gap: 30px; margin-bottom: 30px; }
+        .score-item { background: #fdf0f2; border-radius: 10px; padding: 10px 22px; }
+        .score-item span { display: block; font-size: 1.5rem; font-weight: 700; color: #b5838d; }
+        .score-item label { font-size: 0.75rem; color: #a08090; text-transform: uppercase; letter-spacing: 1px; }
+        .riddle-box {
+            background: linear-gradient(135deg, #b5838d, #e8a0a8);
+            color: white;
+            border-radius: 16px;
+            padding: 30px 25px;
+            margin-bottom: 25px;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            line-height: 1.7;
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .hint-text { color: #c09090; font-size: 0.9rem; margin-bottom: 15px; min-height: 22px; font-style: italic; }
+        .answer-input {
+            width: 100%; padding: 14px 20px;
+            border: 2px solid #f9dde0; border-radius: 10px;
+            font-size: 1rem; font-family: 'Lato', sans-serif;
+            color: #4a3040; outline: none; margin-bottom: 15px;
+        }
+        .answer-input:focus { border-color: #b5838d; }
+        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+        button {
+            padding: 12px 28px; border: none; border-radius: 10px;
+            font-size: 0.95rem; font-family: 'Lato', sans-serif; cursor: pointer;
+            transition: transform 0.15s;
+        }
+        button:hover { transform: translateY(-2px); }
+        .btn-primary { background: #b5838d; color: white; }
+        .btn-hint    { background: #f9dde0; color: #b5838d; }
+        .btn-skip    { background: #eee; color: #888; }
+        .btn-new     { background: #4a3040; color: white; }
+        .feedback { font-size: 1.1rem; font-weight: 700; min-height: 28px; margin-bottom: 10px; }
+        .feedback.correct { color: #5a9e6f; }
+        .feedback.wrong   { color: #c0504d; }
+        .answer-reveal { background: #fdf0f2; border-radius: 10px; padding: 12px 20px; color: #b5838d; font-family: 'Playfair Display', serif; min-height: 44px; }
+        .progress-text { color: #a08090; font-size: 0.85rem; margin-top: 20px; }
+        footer { width: 100%; background-color: #b5838d; color: white; text-align: center; padding: 18px; font-size: 0.85rem; margin-top: auto; }
+        footer a { color: #f9dde0; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="index.html">Home</a> |
+    <a href="resume.html">Resume</a> |
+    <a href="scratch.html">Baking</a> |
+    <a href="app.html">Riddle Game</a>
+</nav>
+
+<div class="game-container">
+    <h1>🎯 Riddle Me This!</h1>
+    <p class="subtitle">Can you solve Ella's riddles? Think carefully...</p>
+
+    <div class="score-bar">
+        <div class="score-item"><span id="correct-count">0</span><label>Correct</label></div>
+        <div class="score-item"><span id="total-count">0</span><label>Attempted</label></div>
+        <div class="score-item"><span id="streak-count">0</span><label>Streak 🔥</label></div>
+    </div>
+
+    <div class="riddle-box" id="riddle-text">Press "New Riddle" to begin!</div>
+    <div class="hint-text" id="hint-text"></div>
+
+    <input class="answer-input" id="answer-input" type="text"
+        placeholder="Type your answer here..."
+        onkeydown="if(event.key==='Enter') checkAnswer()"/>
+
+    <div class="btn-row">
+        <button class="btn-primary" onclick="checkAnswer()">Submit Answer</button>
+        <button class="btn-hint" onclick="showHint()">💡 Hint</button>
+        <button class="btn-skip" onclick="skipRiddle()">Skip</button>
+        <button class="btn-new" onclick="newRiddle()">New Riddle 🔀</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+    <div class="answer-reveal" id="answer-reveal"></div>
+    <div class="progress-text" id="progress-text"></div>
+</div>
+
+<footer>
+    <p>Copyright &copy; Ella Nelson 2025 &nbsp;|&nbsp; <a href="scratch.html">← Back to Baking Page</a></p>
+</footer>
+
+<script>
+    const riddles = [
+        { question: "I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?", answer: "echo", hint: "You hear me in mountains and canyons." },
+        { question: "The more you take, the more you leave behind. What am I?", answer: "footsteps", hint: "Think about walking..." },
+        { question: "I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?", answer: "map", hint: "You use me for directions." },
+        { question: "What has hands but can't clap?", answer: "clock", hint: "You check me to see what time it is." },
+        { question: "I'm light as a feather, but even the strongest person can't hold me for more than a few minutes. What am I?", answer: "breath", hint: "You do it every second of every day." },
+        { question: "What gets wetter as it dries?", answer: "towel", hint: "You use me after a shower." },
+        { question: "I have a head and a tail, but no body. What am I?", answer: "coin", hint: "You might find me in your pocket." },
+        { question: "What comes once in a minute, twice in a moment, but never in a thousand years?", answer: "m", hint: "Look carefully at the letters in the words." },
+        { question: "The more you have of me, the less you see. What am I?", answer: "darkness", hint: "I'm the opposite of light." },
+        { question: "I have keys but no locks. I have space but no room. You can enter, but can't go inside. What am I?", answer: "keyboard", hint: "You're probably using one right now." },
+        { question: "What can travel around the world while staying in a corner?", answer: "stamp", hint: "You put me on an envelope." },
+        { question: "I'm always running but never walk. I have a mouth but never talk. I have a bed but never sleep. What am I?", answer: "river", hint: "I flow through nature." },
+        { question: "What has an eye but cannot see?", answer: "needle", hint: "Used for sewing." },
+        { question: "What building has the most stories?", answer: "library", hint: "You borrow books from here." },
+        { question: "I shrink whenever I work. I get smaller the harder I try. What am I?", answer: "eraser", hint: "I fix your mistakes on paper." }
+    ];
+
+    let currentIndex = -1, correctCount = 0, totalCount = 0, streak = 0, answered = false;
+
+    function newRiddle() {
+        let next;
+        do { next = Math.floor(Math.random() * riddles.length); } while (next === currentIndex);
+        currentIndex = next;
+        document.getElementById('riddle-text').textContent = riddles[currentIndex].question;
+        document.getElementById('answer-input').value = '';
+        document.getElementById('feedback').textContent = '';
+        document.getElementById('feedback').className = 'feedback';
+        document.getElementById('answer-reveal').textContent = '';
+        document.getElementById('hint-text').textContent = '';
+        document.getElementById('progress-text').textContent = '';
+        document.getElementById('answer-input').disabled = false;
+        answered = false;
+        document.getElementById('answer-input').focus();
+    }
+
+    function checkAnswer() {
+        if (currentIndex === -1) { alert("Press 'New Riddle' first!"); return; }
+        if (answered) return;
+        const userAnswer = document.getElementById('answer-input').value.trim().toLowerCase();
+        const correctAnswer = riddles[currentIndex].answer.toLowerCase();
+        totalCount++;
+        answered = true;
+        document.getElementById('total-count').textContent = totalCount;
+        if (userAnswer === correctAnswer) {
+            correctCount++; streak++;
+            document.getElementById('feedback').textContent = '🎉 Correct! Well done!';
+            document.getElementById('feedback').className = 'feedback correct';
+            document.getElementById('answer-reveal').textContent = `✅ The answer is: "${riddles[currentIndex].answer}"`;
+        } else {
+            streak = 0;
+            document.getElementById('feedback').textContent = '❌ Not quite!';
+            document.getElementById('feedback').className = 'feedback wrong';
+            document.getElementById('answer-reveal').textContent = `💡 The answer was: "${riddles[currentIndex].answer}"`;
+        }
+        document.getElementById('correct-count').textContent = correctCount;
+        document.getElementById('streak-count').textContent = streak;
+        document.getElementById('progress-text').textContent = `Score: ${correctCount} / ${totalCount} correct (${Math.round(correctCount/totalCount*100)}%)`;
+        document.getElementById('answer-input').disabled = true;
+    }
+
+    function showHint() {
+        if (currentIndex === -1 || answered) return;
+        document.getElementById('hint-text').textContent = '💡 Hint: ' + riddles[currentIndex].hint;
+    }
+
+    function skipRiddle() {
+        if (currentIndex === -1 || answered) return;
+        totalCount++; streak = 0;
+        document.getElementById('total-count').textContent = totalCount;
+        document.getElementById('streak-count').textContent = streak;
+        document.getElementById('answer-reveal').textContent = `⏭️ Skipped! The answer was: "${riddles[currentIndex].answer}"`;
+        document.getElementById('progress-text').textContent = `Score: ${correctCount} / ${totalCount} correct (${Math.round(correctCount/totalCount*100)}%)`;
+        setTimeout(newRiddle, 1500);
+    }
+
+    newRiddle();
+</script>
+</body>
+</html>
